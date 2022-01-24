@@ -14,6 +14,7 @@ from starlette.background import BackgroundTasks
 import os
 from config import *
 from web_app.edit_pdf import create_pdf
+from time import sleep
 
 # todo hide /docs route
 
@@ -53,7 +54,11 @@ async def homepage(request: Request):
 
 
 def remove_file(path: str) -> None:
-    os.unlink(path)
+    sleep(60)
+    try:
+        os.unlink(path)
+    except:
+        pass
 
 
 @app.get("/files/{filename}")

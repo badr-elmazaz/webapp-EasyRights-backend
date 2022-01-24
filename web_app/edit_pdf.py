@@ -13,3 +13,5 @@ def create_pdf(data: list[dict]):
     fillpdfs.flatten_pdf(path_to_file, path_to_file)
     return file_name
 
+if __name__ == "__main__":
+    fillpdfs.print_form_fields(r".\static\modulo.pdf")
