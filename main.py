@@ -17,6 +17,7 @@ from web_app.edit_pdf import create_pdf
 from time import sleep
 
 # todo hide /docs route
+# todo routine to drop all the pdfs not downloaded
 
 app = FastAPI()
 limiter = Limiter(key_func=get_remote_address)
@@ -46,11 +47,7 @@ async def homepage(request: Request):
     # return JSONResponse(content=json_compatible_item_data)
 
 
-@app.get("/pdf")
-@limiter.limit("8/minute")
-async def homepage(request: Request):
-    return FileResponse(r".\web_app\static\newflat.pdf", media_type='application/octet-stream',
-                        filename="alfredogay.pdf")
+
 
 
 def remove_file(path: str) -> None:
@@ -63,7 +60,7 @@ def remove_file(path: str) -> None:
 
 @app.get("/files/{filename}")
 async def file(request: Request, filename, background_tasks: BackgroundTasks):
-    path_to_file = './static_download/' + filename
+    path_to_file = os.path.join(os.getcwd(), "static_download", filename)
 
     if not isfile(path_to_file):
         return Response(status_code=404)
