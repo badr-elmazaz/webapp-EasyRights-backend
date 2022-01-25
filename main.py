@@ -1,3 +1,4 @@
+import logging
 from os.path import isfile
 
 import uvicorn
@@ -15,9 +16,12 @@ import os
 from config import *
 from web_app.edit_pdf import create_pdf
 from time import sleep
+from fastapi_utils.tasks import repeat_every
+from pathlib import Path
+import arrow
 
 # todo hide /docs route
-# todo routine to drop all the pdfs not downloaded
+# todo insert logs
 
 app = FastAPI()
 limiter = Limiter(key_func=get_remote_address)
@@ -35,6 +39,38 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+@repeat_every(seconds=60 * 60 * 12)
+def remove_files():
+    logging.info("APP STARTED")
+    Path(os.path.join(os.getcwd(), "static_download")).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(os.getcwd(), "web_app", "tmp")).mkdir(parents=True, exist_ok=True)
+    files_path = os.path.join(os.getcwd(), "static_download")
+    files_path_tmp = os.path.join(os.getcwd(), "web_app", "tmp")
+
+    # now = arrow.now()
+    now = arrow.now().shift(hours=+20)
+
+    for file in Path(files_path).glob('*'):
+        if file.is_file():
+            file_time = arrow.get(file.stat().st_mtime)
+            if file_time < now:
+                try:
+                    os.unlink(file.absolute())
+                except:
+                    logging.error(f"can't delete file {file.absolute()}")
+
+    for file in Path(files_path_tmp).glob('*'):
+        if file.is_file():
+            file_time = arrow.get(file.stat().st_mtime)
+            if file_time < now:
+                try:
+                    os.unlink(file.absolute())
+                except:
+                    logging.error(f"can't delete file {file.absolute()}")
+
 
 
 @app.post("/create-pdf")
@@ -55,7 +91,7 @@ def remove_file(path: str) -> None:
     try:
         os.unlink(path)
     except:
-        pass
+        logging.error(f"can't delete file {path.absolute()}")
 
 
 @app.get("/files/{filename}")

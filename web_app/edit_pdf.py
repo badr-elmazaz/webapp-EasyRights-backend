@@ -7,8 +7,7 @@ def create_pdf(data: list[dict]):
     print(data)
     data_dict={}
     file_name = str(uuid4()) + ".pdf"
-    path_to_file = ".\\static_download\\"
-    path_to_file=path_to_file+file_name
+    path_to_file = os.path.join(os.getcwd(), "web_app", "tmp", file_name)
     for d in data:
         data_dict.update(d["answer"])
     fillpdfs.write_fillable_pdf(r".\web_app\static\modulo.pdf", path_to_file, data_dict)
@@ -19,8 +18,6 @@ def create_pdf(data: list[dict]):
     try:
         os.unlink(path_to_file)
     except:
-        pass
+        logging.error(f"can't delete file {path_to_file.absolute()}")
     return file_name2
 
-if __name__ == "__main__":
-    fillpdfs.print_form_fields(r".\static\modulo.pdf")
