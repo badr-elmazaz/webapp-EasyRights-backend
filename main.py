@@ -13,7 +13,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from starlette.background import BackgroundTasks
 import os
-from config import *
+from _config import *
 from web_app.edit_pdf import create_pdf
 from time import sleep
 from fastapi_utils.tasks import repeat_every
@@ -42,7 +42,7 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-@repeat_every(seconds=60 * 60 * 12)
+@repeat_every(seconds=60 * 30)
 def remove_files():
     logging.info("APP STARTED")
     Path(os.path.join(os.getcwd(), "static_download")).mkdir(parents=True, exist_ok=True)
@@ -50,8 +50,8 @@ def remove_files():
     files_path = os.path.join(os.getcwd(), "static_download")
     files_path_tmp = os.path.join(os.getcwd(), "web_app", "tmp")
 
-    # now = arrow.now()
-    now = arrow.now().shift(hours=+20)
+    now = arrow.now()
+    # now = arrow.now().shift(hours=+20)
 
     for file in Path(files_path).glob('*'):
         if file.is_file():
@@ -74,14 +74,13 @@ def remove_files():
 
 
 @app.post("/create-pdf")
-@limiter.limit("8/minute")
+# @limiter.limit("10/minute")
 async def homepage(request: Request):
     data = await request.json()
     value = "files/" + create_pdf(data)
     return value
     # json_compatible_item_data = jsonable_encoder(value)
     # return JSONResponse(content=json_compatible_item_data)
-
 
 
 
@@ -107,4 +106,4 @@ async def file(request: Request, filename, background_tasks: BackgroundTasks):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="localhost", port=8636)
+    uvicorn.run(app, host="localhost", port=8637)
