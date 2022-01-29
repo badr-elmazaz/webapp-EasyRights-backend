@@ -5,9 +5,7 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi import Response
 from fastapi.middleware.cors import CORSMiddleware
-# from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse
-# from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -29,6 +27,14 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+#setting logger
+logger = logging.getLogger(__name__)
+Path(os.path.join(os.getcwd(), "logs")).mkdir(parents=True, exist_ok=True)
+file_handler = logging.FileHandler(os.path.join(os.getcwd(), "logs", "api.log"))
+formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
+logger.addHandler(file_handler)
+file_handler.setFormatter(formatter)
+
 origins = [
     "*"
 ]
@@ -47,6 +53,7 @@ app.add_middleware(
 def remove_files():
     logging.info("APP STARTED")
     Path(os.path.join(os.getcwd(), "static_download")).mkdir(parents=True, exist_ok=True)
+
     Path(os.path.join(os.getcwd(), "web_app", "tmp")).mkdir(parents=True, exist_ok=True)
     files_path = os.path.join(os.getcwd(), "static_download")
     files_path_tmp = os.path.join(os.getcwd(), "web_app", "tmp")
@@ -61,7 +68,7 @@ def remove_files():
                 try:
                     os.unlink(file.absolute())
                 except:
-                    logging.error(f"can't delete file {file.absolute()}")
+                    logger.error(f"can't delete file {file.absolute()}")
 
     for file in Path(files_path_tmp).glob('*'):
         if file.is_file():
@@ -70,18 +77,18 @@ def remove_files():
                 try:
                     os.unlink(file.absolute())
                 except:
-                    logging.error(f"can't delete file {file.absolute()}")
+                    logger.error(f"can't delete file {file.absolute()}")
 
 
 
 @app.post("/create-pdf")
 # @limiter.limit("10/minute")
-async def homepage(request: Request):
+async def pdf(request: Request):
     data = await request.json()
+    logger.info(f"Data received: {data}")
     value = "files/" + create_pdf(data)
     return value
-    # json_compatible_item_data = jsonable_encoder(value)
-    # return JSONResponse(content=json_compatible_item_data)
+
 
 
 
@@ -107,4 +114,4 @@ async def file(request: Request, filename, background_tasks: BackgroundTasks):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="localhost", port=8637)
+    uvicorn.run(app, host="localhost", port=8638)
