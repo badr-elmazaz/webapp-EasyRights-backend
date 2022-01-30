@@ -35,3 +35,4 @@ def create_pdf(data: list[dict]):
         logger.info(f"File created: {file_name2}")
         return file_name2
 
+

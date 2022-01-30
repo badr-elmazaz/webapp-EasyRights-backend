@@ -17,6 +17,7 @@ from time import sleep
 from fastapi_utils.tasks import repeat_every
 from pathlib import Path
 import arrow
+from logging.handlers import RotatingFileHandler
 
 # todo hide /docs route
 # todo insert logs
@@ -27,13 +28,18 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-#setting logger
+# setting logger
 logger = logging.getLogger(__name__)
 Path(os.path.join(os.getcwd(), "logs")).mkdir(parents=True, exist_ok=True)
-file_handler = logging.FileHandler(os.path.join(os.getcwd(), "logs", "api.log"))
+log_file = os.path.join(os.getcwd(), "logs", "api.log")
 formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
-logger.addHandler(file_handler)
-file_handler.setFormatter(formatter)
+my_handler = RotatingFileHandler(log_file, mode='a', maxBytes=1000000,
+                                 backupCount=2, encoding="utf-8", delay=0)
+# my_handler = RotatingFileHandler(log_file, mode='a', maxBytes=10 * 1024 * 1024,
+#                                  backupCount=2, encoding="utf-8", delay=0)
+my_handler.setFormatter(formatter)
+my_handler.setLevel(logging.INFO)
+logger.addHandler(my_handler)
 
 origins = [
     "*"
@@ -80,7 +86,6 @@ def remove_files():
                     logger.error(f"can't delete file {file.absolute()}")
 
 
-
 @app.post("/create-pdf")
 # @limiter.limit("10/minute")
 async def pdf(request: Request):
@@ -88,9 +93,6 @@ async def pdf(request: Request):
     logger.info(f"Data received: {data}")
     value = "files/" + create_pdf(data)
     return value
-
-
-
 
 
 def remove_file(path: str) -> None:
