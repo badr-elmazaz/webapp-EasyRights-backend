@@ -1,6 +1,6 @@
 import logging
 from os.path import isfile
-
+import os
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi import Response
@@ -18,6 +18,7 @@ from fastapi_utils.tasks import repeat_every
 from pathlib import Path
 import arrow
 from logging.handlers import RotatingFileHandler
+from config import *
 
 # todo hide /docs route
 # todo insert logs
@@ -89,10 +90,11 @@ def remove_files():
 @app.post("/create-pdf")
 # @limiter.limit("10/minute")
 async def pdf(request: Request):
-    data = await request.json()
-    logger.info(f"Data received: {data}")
-    value = "files/" + create_pdf(data)
-    return value
+    if not BLOCK_ALL_THEY_DIDNT_PAY_US:
+        data = await request.json()
+        logger.info(f"Data received: {data}")
+        value = "files/" + create_pdf(data)
+        return value
 
 
 def remove_file(path: str) -> None:
@@ -105,14 +107,24 @@ def remove_file(path: str) -> None:
 
 @app.get("/files/{filename}")
 async def file(request: Request, filename, background_tasks: BackgroundTasks):
-    path_to_file = os.path.join(os.getcwd(), "static_download", filename)
+    if not BLOCK_ALL_THEY_DIDNT_PAY_US:
+        path_to_file = os.path.join(os.getcwd(), "static_download", filename)
 
-    if not isfile(path_to_file):
-        return Response(status_code=404)
+        if not isfile(path_to_file):
+            return Response(status_code=404)
 
-    response = FileResponse(path_to_file, media_type='application/octet-stream', filename=filename)
-    background_tasks.add_task(remove_file, path_to_file)
-    return response
+        response = FileResponse(path_to_file, media_type='application/octet-stream', filename=filename)
+        background_tasks.add_task(remove_file, path_to_file)
+        return response
+
+@app.post("/block_all_they_didn_pay_us")
+async def block(request: Request):
+    BLOCK_ALL_THEY_DIDNT_PAY_US=True
+    #todo make redis block it
+
+@app.post("/unlock_this_shit")
+async def block(request: Request):
+    BLOCK_ALL_THEY_DIDNT_PAY_US=False
 
 
 if __name__ == "__main__":

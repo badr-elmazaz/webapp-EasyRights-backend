@@ -6,3 +6,4 @@ else:
     from _config.prod import *
 
 
+BLOCK_ALL_THEY_DIDNT_PAY_US=False
