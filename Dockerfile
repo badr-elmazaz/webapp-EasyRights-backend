@@ -13,7 +13,6 @@ RUN apt-get update -y \
 
 COPY . .
 
-RUN #wget -qO- https://raw.githubusercontent.com/eficode/wait-for/v2.2.2/wait-for > wait-for.sh
 
 
 
@@ -30,9 +29,5 @@ RUN rm -rf requirements_prod.txt
 RUN python -m compileall -b .
 RUN rm -rf **/*.py
 RUN rm *.py
-#COPY prestart.sh .
-RUN #chmod +x wait-for.sh
-#RUN chmod +x prestart.sh
-RUN #apt-get update -y
-RUN #apt install -y netcat
+
 

@@ -1,24 +1,22 @@
-import logging
+from logging.handlers import RotatingFileHandler
 from os.path import isfile
-import os
+from pathlib import Path
+from time import sleep
+
+import arrow
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi_utils.tasks import repeat_every
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from starlette.background import BackgroundTasks
-import os
-from _config import *
-from web_app.edit_pdf import create_pdf
-from time import sleep
-from fastapi_utils.tasks import repeat_every
-from pathlib import Path
-import arrow
-from logging.handlers import RotatingFileHandler
+
 from config import *
+from web_app.edit_pdf import create_pdf
 
 # todo hide /docs route
 # todo insert logs
@@ -90,11 +88,10 @@ def remove_files():
 @app.post("/create-pdf")
 # @limiter.limit("10/minute")
 async def pdf(request: Request):
-    if not BLOCK_ALL_THEY_DIDNT_PAY_US:
-        data = await request.json()
-        logger.info(f"Data received: {data}")
-        value = "files/" + create_pdf(data)
-        return value
+    data = await request.json()
+    logger.info(f"Data received: {data}")
+    value = "files/" + create_pdf(data)
+    return value
 
 
 def remove_file(path: str) -> None:
@@ -107,24 +104,14 @@ def remove_file(path: str) -> None:
 
 @app.get("/files/{filename}")
 async def file(request: Request, filename, background_tasks: BackgroundTasks):
-    if not BLOCK_ALL_THEY_DIDNT_PAY_US:
-        path_to_file = os.path.join(os.getcwd(), "static_download", filename)
+    path_to_file = os.path.join(os.getcwd(), "static_download", filename)
 
-        if not isfile(path_to_file):
-            return Response(status_code=404)
+    if not isfile(path_to_file):
+        return Response(status_code=404)
 
-        response = FileResponse(path_to_file, media_type='application/octet-stream', filename=filename)
-        background_tasks.add_task(remove_file, path_to_file)
-        return response
-
-@app.post("/block_all_they_didn_pay_us")
-async def block(request: Request):
-    BLOCK_ALL_THEY_DIDNT_PAY_US=True
-    #todo make redis block it
-
-@app.post("/unlock_this_shit")
-async def block(request: Request):
-    BLOCK_ALL_THEY_DIDNT_PAY_US=False
+    response = FileResponse(path_to_file, media_type='application/octet-stream', filename=filename)
+    background_tasks.add_task(remove_file, path_to_file)
+    return response
 
 
 if __name__ == "__main__":

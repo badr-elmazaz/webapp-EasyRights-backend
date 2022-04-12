@@ -35,5 +35,5 @@ for k in json_en:
             if "helperText" in j.keys():
                 j["helperText"] = trans(j["helperText"])
 
-with open("ukrainian.json", "w") as f:
+with open("../ukrainian.json", "w") as f:
     json.dump(json_en, f)
