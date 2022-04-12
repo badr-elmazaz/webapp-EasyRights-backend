@@ -115,4 +115,4 @@ async def file(request: Request, filename, background_tasks: BackgroundTasks):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8638)
+    uvicorn.run(app, host=APP_HOST, port=APP_PORT)
